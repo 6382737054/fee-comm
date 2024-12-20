@@ -1,7 +1,7 @@
-
 import React, { useEffect, useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Switch } from '../components/ui/switch';
 import api from '../api/api';
 
 const Account6Form = () => {
@@ -10,7 +10,7 @@ const Account6Form = () => {
   const [initialLoading, setInitialLoading] = useState(true);
   const loginResponse = JSON.parse(localStorage.getItem('loginResponse') || '{}');
   const localityType = localStorage.getItem('localityType') || 'Panchayat';
-  const childrenCount = localStorage.getItem('totalStudentStrength') || 0;
+  const childrenCount = parseInt(localStorage.getItem('totalStudentStrength')) || 0;
   const accountsItoVTotal = parseFloat(localStorage.getItem('accountsItoVTotalAllowed')) || 0;
 
   const getDevelopmentFundPercentage = (locality) => {
@@ -25,7 +25,6 @@ const Account6Form = () => {
         return 10;
     }
   };
-  
 
   const [form, setForm] = useState({
     developmentFund: { 
@@ -34,18 +33,18 @@ const Account6Form = () => {
       reason: ''
     },
     minority: { 
-      expenditure: '', 
-      allowed: '',
+      enabled: false,
+      allowed: 0,
       reason: ''
     },
     infrastructure: { 
-      percentage: 7, 
+      percentage: 9, 
       allowed: 0,
       reason: ''
     },
     unexpected: { 
-      expenditure: 750, 
-      allowed: '',
+      amount: 750,
+      allowed: 0,
       reason: ''
     }
   });
@@ -74,29 +73,32 @@ const Account6Form = () => {
         });
 
         if (response.data?.results) {
-            const data = response.data.results;
-            const devFundPercentage = getDevelopmentFundPercentage(localityType);
-            const devFundAllowed = (accountsItoVTotal * (devFundPercentage/100));
+          const data = response.data.results;
+          const devFundPercentage = getDevelopmentFundPercentage(localityType);
+          const devFundAllowed = (accountsItoVTotal * (devFundPercentage/100));
+          const infraAllowed = (accountsItoVTotal * (9/100));
+          const unexpectedAmount = data.account6UnexpectedExpendituresPercentage || 750;
+          const unexpectedAllowed = unexpectedAmount * childrenCount;
 
-            setForm({
-                developmentFund: {
-                  percentage: devFundPercentage,
-                  allowed: devFundAllowed,
-                  reason: data.account6DevelopmentFundReason || ''
-                },
+          setForm({
+            developmentFund: {
+              percentage: devFundPercentage,
+              allowed: devFundAllowed,
+              reason: data.account6DevelopmentFundReason || ''
+            },
             minority: {
-              expenditure: data.account6MinorityExpenditure || '',
-              allowed: data.account6MinorityAllowed || '',
+              enabled: Boolean(data.account6MinorityAmount),
+              allowed: data.account6MinorityAmount || 0,
               reason: data.account6MinorityReason || ''
             },
             infrastructure: {
-              percentage: data.account6InfrastructureExpenditure || 7,
-              allowed: (accountsItoVTotal * (7/100)),
+              percentage: 9,
+              allowed: infraAllowed,
               reason: data.account6InfrastructureReason || ''
             },
             unexpected: {
-              expenditure: 750,
-              allowed: data.account6UnexpectedExpendituresAllowed || '',
+              amount: unexpectedAmount,
+              allowed: unexpectedAllowed,
               reason: data.account6UnexpectedExpendituresReason || ''
             }
           });
@@ -109,56 +111,50 @@ const Account6Form = () => {
     };
 
     fetchFormData();
-  }, [loginResponse?.output?.token, loginResponse?.output?.data?.id, localityType, accountsItoVTotal]);
+  }, [loginResponse?.output?.token, loginResponse?.output?.data?.id, localityType, accountsItoVTotal, childrenCount]);
 
   useEffect(() => {
-    const totalAllowed = Object.values(form).reduce((sum, item) => sum + (parseFloat(item.allowed) || 0), 0);
-    const grandTotal = accountsItoVTotal + totalAllowed;
-    const mean = grandTotal / (parseInt(childrenCount) || 1);
-
-    setTotals({
-      account6TotalAllowed: totalAllowed,
-      grandTotalAllowed: grandTotal,
-      meanValue: mean,
-      grandTotalAllowed: grandTotal
-    });
-    localStorage.setItem('grandTotalAllowed(I-VI)', grandTotal.toFixed(2));
-  }, [form, accountsItoVTotal, childrenCount]);
-
-  const handleInfraPercentageChange = (value) => {
-    const percentage = Math.min(Math.max(parseFloat(value) || 7, 7), 10);
-    const allowed = (accountsItoVTotal * (percentage/100));
-
-    setForm(prev => ({
-      ...prev,
-      infrastructure: {
-        ...prev.infrastructure,
-        percentage,
-        allowed
-      }
-    }));
-  };
-
-  const handleMinorityChange = (value) => {
-    const percentage = parseFloat(value) || 0;
-    const allowed = (accountsItoVTotal * (percentage/100));
-    
+    const minorityAllowed = form.minority.enabled ? (accountsItoVTotal * 0.1) : 0;
     setForm(prev => ({
       ...prev,
       minority: {
         ...prev.minority,
-        expenditure: percentage,
-        allowed: allowed
+        allowed: minorityAllowed
+      }
+    }));
+  }, [form.minority.enabled, accountsItoVTotal]);
+
+  useEffect(() => {
+    const totalAllowed = Object.values(form).reduce((sum, item) => sum + (parseFloat(item.allowed) || 0), 0);
+    const grandTotal = accountsItoVTotal + totalAllowed;
+    const mean = grandTotal / (childrenCount || 1);
+
+    setTotals({
+      account6TotalAllowed: totalAllowed,
+      grandTotalAllowed: grandTotal,
+      meanValue: mean
+    });
+    localStorage.setItem('grandTotalAllowed(I-VI)', grandTotal.toFixed(2));
+  }, [form, accountsItoVTotal, childrenCount]);
+
+  const handleMinorityToggle = (enabled) => {
+    setForm(prev => ({
+      ...prev,
+      minority: {
+        ...prev.minority,
+        enabled
       }
     }));
   };
-  const handleUnexpectedAllowedChange = (value) => {
+
+  const handleUnexpectedAmountChange = (amount) => {
+    const allowed = amount * childrenCount;
     setForm(prev => ({
       ...prev,
       unexpected: {
         ...prev.unexpected,
-        expenditure: 750,
-        allowed: value
+        amount,
+        allowed
       }
     }));
   };
@@ -182,13 +178,13 @@ const Account6Form = () => {
       const payload = {
         account6DevelopmentFundPercentage: form.developmentFund.percentage,
         account6DevelopmentFundAmount: form.developmentFund.allowed,
-        account6MinorityPercentage: parseFloat(form.minority.expenditure) || 0,
-        account6MinorityAmount: parseFloat(form.minority.allowed) || 0,
+        account6MinorityPercentage: form.minority.enabled ? 10 : 0,
+        account6MinorityAmount: form.minority.allowed,
         account6InfrastructurePercentage: form.infrastructure.percentage,
         account6InfrastructureAmount: form.infrastructure.allowed,
-        account6UnexpectedExpendituresPercentage: form.unexpected.expenditure,
-        account6UnexpectedExpendituresAmount: parseFloat(form.unexpected.allowed) || 0,
-        account6NumberOfChildren: parseInt(childrenCount),
+        account6UnexpectedExpendituresPercentage: form.unexpected.amount,
+        account6UnexpectedExpendituresAmount: form.unexpected.allowed,
+        account6NumberOfChildren: childrenCount,
         account6MeanValue: totals.meanValue,
         account6Total: totals.account6TotalAllowed,
         account1to6Total: totals.grandTotalAllowed,
@@ -214,6 +210,7 @@ const Account6Form = () => {
       setLoading(false);
     }
   };
+
   if (initialLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -243,102 +240,93 @@ const Account6Form = () => {
                   <th className="border border-gray-300 px-4 py-2 text-left">HEAD OF EXPENDITURE</th>
                   <th className="border border-gray-300 px-4 py-2">Expenditure</th>
                   <th className="border border-gray-300 px-4 py-2">Allowed</th>
-                 
+                  <th className="border border-gray-300 px-4 py-2">Reason</th>
                 </tr>
               </thead>
               <tbody>
-              <tr>
-  <td className="border border-gray-300 px-4 py-2">
-    Development fund
-    <div className="ml-4 text-sm">
-      {localityType} {form.developmentFund.percentage}%
-      {localityType === 'Minority' && 
-        <div>(For Christian Catholic minority school irrespective of location)</div>
-      }
-    </div>
-  </td>
-  <td className="border border-gray-300 px-4 py-2 text-center">
-    {form.developmentFund.percentage}%
-  </td>
-  <td className="border border-gray-300 px-4 py-2 text-center">
-    {form.developmentFund.allowed.toFixed(2)}
-  </td>
-  <td className="border border-gray-300 px-4 py-2" contentEditable
-    onBlur={(e) => handleReasonChange('developmentFund', e.target.textContent)}>
-    {form.developmentFund.reason}
-  </td>
-</tr>
+                <tr>
+                  <td className="border border-gray-300 px-4 py-2">
+                    Development fund
+                    <div className="ml-4 text-sm">
+                      {localityType} {form.developmentFund.percentage}%
+                      {localityType === 'Minority' && 
+                        <div>(For Christian Catholic minority school irrespective of location)</div>
+                      }
+                    </div>
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2 text-center">
+                    {form.developmentFund.percentage}%
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2 text-center">
+                    {form.developmentFund.allowed.toFixed(2)}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2" contentEditable
+                    onBlur={(e) => handleReasonChange('developmentFund', e.target.textContent)}>
+                    {form.developmentFund.reason}
+                  </td>
+                </tr>
 
-<tr>
-  <td className="border border-gray-300 px-4 py-2">
-    Minority Catholic school -<br/>
-    Corporate school<br/>
-    Development Fund (10%)
-  </td>
-  {/* <td className="border border-gray-300 px-4 py-2 text-center">
-  <input
-    type="number"
-    value={form.minority.expenditure}
-    onChange={(e) => handleMinorityChange(e.target.value)}
-    className="w-20 px-2 py-1 text-center border rounded-md"
-  />%
-</td>
-  <td className="border border-gray-300 px-4 py-2 text-center">
-    {form.minority.allowed}
-  </td>
-  <td className="border border-gray-300 px-4 py-2" contentEditable
-    onBlur={(e) => handleReasonChange('minority', e.target.textContent)}>
-    {form.minority.reason}
-  </td> */}
-</tr>
+                <tr>
+                  <td className="border border-gray-300 px-4 py-2">
+                    Minority Catholic school -<br/>
+                    Corporate school<br/>
+                    Development Fund (10%)
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2 text-center">
+                    <Switch
+                      checked={form.minority.enabled}
+                      onCheckedChange={handleMinorityToggle}
+                    />
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2 text-center">
+                    {form.minority.enabled ? form.minority.allowed.toFixed(2) : '-'}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2" contentEditable
+                    onBlur={(e) => handleReasonChange('minority', e.target.textContent)}>
+                    {form.minority.reason}
+                  </td>
+                </tr>
 
-<tr>
-  <td className="border border-gray-300 px-4 py-2">
-    Infrastructure Grading<br/>
-    (7% to 10%) Additional income
-  </td>
-  <td className="border border-gray-300 px-4 py-2 text-center">
-    <input
-      type="number"
-      min="7"
-      max="10"
-      value={form.infrastructure.percentage}
-      onChange={(e) => handleInfraPercentageChange(e.target.value)}
-      className="w-20 px-2 py-1 text-center border rounded-md"
-    />%
-  </td>
-  <td className="border border-gray-300 px-4 py-2 text-center">
-    {form.infrastructure.allowed.toFixed(2)}
-  </td>
-  <td className="border border-gray-300 px-4 py-2" contentEditable
-    onBlur={(e) => handleReasonChange('infrastructure', e.target.textContent)}>
-    {form.infrastructure.reason}
-  </td>
-</tr>
+                <tr>
+                  <td className="border border-gray-300 px-4 py-2">
+                    Infrastructure Grading<br/>
+                    (Fixed 9%) Additional income
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2 text-center">9%</td>
+                  <td className="border border-gray-300 px-4 py-2 text-center">
+                    {form.infrastructure.allowed.toFixed(2)}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2" contentEditable
+                    onBlur={(e) => handleReasonChange('infrastructure', e.target.textContent)}>
+                    {form.infrastructure.reason}
+                  </td>
+                </tr>
 
-<tr>
-  <td className="border border-gray-300 px-4 py-2">
-    Unexpected expenditures,<br/>
-    which cannot be included<br/>
-    in any of the above heads.<br/>
-    (If a fixed amount Rs.750/-<br/>
-    or Rs.1000/-) is not<br/>
-    allowed already
-  </td>
-  <td className="border border-gray-300 px-4 py-2 text-center">750</td>
-  <td className="border border-gray-300 px-4 py-2 text-center">
-    <input
-      type="number"
-      value={form.unexpected.allowed}
-      onChange={(e) => handleUnexpectedAllowedChange(e.target.value)}
-      className="w-20 px-2 py-1 text-center border rounded-md"
-    />
-  </td>
-  <td className="border border-gray-300 px-4 py-2" contentEditable
-    onBlur={(e) => handleReasonChange('unexpected', e.target.textContent)}>
-    {form.unexpected.reason}
-  </td>
-</tr>
+                <tr>
+                  <td className="border border-gray-300 px-4 py-2">
+                    Unexpected expenditures,<br/>
+                    which cannot be included<br/>
+                    in any of the above heads.
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2 text-center">
+                    <select 
+                      value={form.unexpected.amount}
+                      onChange={(e) => handleUnexpectedAmountChange(Number(e.target.value))}
+                      className="w-24 px-2 py-1 border rounded-md"
+                    >
+                      <option value={750}>750</option>
+                      <option value={1000}>1000</option>
+                    </select>
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2 text-center">
+                    {form.unexpected.allowed.toFixed(2)}
+                  </td>
+                  <td className="border border-gray-300 px-4 py-2" contentEditable
+                    onBlur={(e) => handleReasonChange('unexpected', e.target.textContent)}>
+                    {form.unexpected.reason}
+                  </td>
+                </tr>
+
                 <tr>
                   <td className="border border-gray-300 px-4 py-2 font-bold">Total</td>
                   <td className="border border-gray-300 px-4 py-2"></td>
@@ -347,6 +335,7 @@ const Account6Form = () => {
                   </td>
                   <td className="border border-gray-300 px-4 py-2"></td>
                 </tr>
+
                 <tr>
                   <td className="border border-gray-300 px-4 py-2 font-bold">Grand Total Account I - VI</td>
                   <td className="border border-gray-300 px-4 py-2"></td>
@@ -355,18 +344,20 @@ const Account6Form = () => {
                   </td>
                   <td className="border border-gray-300 px-4 py-2"></td>
                 </tr>
+
                 <tr>
                   <td className="border border-gray-300 px-4 py-2">Number of children</td>
                   <td className="border border-gray-300 px-4 py-2 text-center" colSpan="3">
                     {childrenCount}
                   </td>
                 </tr>
+
                 <tr>
-                  <td className="border border-gray-300 px-4 py-2">Mean value</td>
-                  <td className="border border-gray-300 px-4 py-2 text-center" colSpan="3">
-                    {totals.meanValue.toFixed(2)}
-                  </td>
-                </tr>
+                <td className="border border-gray-300 px-4 py-2">Mean value</td>
+<td className="border border-gray-300 px-4 py-2 text-center" colSpan="3">
+  {totals.meanValue.toFixed(2)}
+</td>
+</tr>
               </tbody>
             </table>
             <div className="flex justify-end space-x-3 mt-6">
@@ -391,4 +382,5 @@ const Account6Form = () => {
     </div>
   );
 };
+
 export default Account6Form;
