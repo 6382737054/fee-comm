@@ -201,7 +201,7 @@ const FormsPage = () => {
     );
   };
 
-  if (userType !== 'Admin' && userType !== 'Section' && userType !== 'Report') {
+  if (userType !== 'Admin' && userType !== 'Section' && userType !== 'Report' && userType !== 'Entry') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
         <div className="text-center">
@@ -217,7 +217,7 @@ const FormsPage = () => {
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
         {!showForm ? (
           <div className="space-y-4">
-            {userType === 'Admin' && (
+           {(userType === 'Admin' || userType === 'Entry') && (
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4">
                 <div className="flex-grow w-full sm:w-auto">
                   <button onClick={() => setShowForm(true)} className="w-full sm:w-auto flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all space-x-2">
@@ -296,3 +296,10 @@ const FormsPage = () => {
   );
 }
 export default FormsPage;
+
+
+
+
+
+
+

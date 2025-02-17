@@ -169,16 +169,19 @@ if (formResponse.data?.results) {
     if (id) {
       fetchFormData();
     }
-  }, [id, loginResponse?.output?.token, loginResponse?.output?.data?.id]);
-  useEffect(() => {
+  }, [id, loginResponse?.output?.token, loginResponse?.output?.data?.id]);useEffect(() => {
     const calculateSectionTotals = (section) => {
-      const expenditureTotal = Object.values(section).reduce(
-        (sum, item) => sum + (parseFloat(item.expenditure) || 0),
-        0
+      const expenditureTotal = Math.round(
+        Object.values(section).reduce(
+          (sum, item) => sum + (parseFloat(item.expenditure) || 0),
+          0
+        )
       );
-      const allowedTotal = Object.values(section).reduce(
-        (sum, item) => sum + (parseFloat(item.allowed) || 0),
-        0
+      const allowedTotal = Math.round(
+        Object.values(section).reduce(
+          (sum, item) => sum + (parseFloat(item.allowed) || 0),
+          0
+        )
       );
       return { expenditure: expenditureTotal, allowed: allowedTotal };
     };
@@ -186,15 +189,15 @@ if (formResponse.data?.results) {
     const sectionATotals = calculateSectionTotals(form.sectionA);
     const sectionBTotals = calculateSectionTotals(form.sectionB);
   
-    // Store individual section totals
+    // Store individual section totals (now rounded)
     localStorage.setItem('sectionAExpenditure', sectionATotals.expenditure.toString());
     localStorage.setItem('sectionAAllowed', sectionATotals.allowed.toString());
     localStorage.setItem('sectionBExpenditure', sectionBTotals.expenditure.toString());
     localStorage.setItem('sectionBAllowed', sectionBTotals.allowed.toString());
   
-    // Calculate and store combined totals
-    const combinedExpenditure = sectionATotals.expenditure + sectionBTotals.expenditure;
-    const combinedAllowed = sectionATotals.allowed + sectionBTotals.allowed;
+    // Calculate and store combined totals (rounded)
+    const combinedExpenditure = Math.round(sectionATotals.expenditure + sectionBTotals.expenditure);
+    const combinedAllowed = Math.round(sectionATotals.allowed + sectionBTotals.allowed);
     localStorage.setItem('totalExpenditure', combinedExpenditure.toString());
     localStorage.setItem('totalAllowed', combinedAllowed.toString());
   
@@ -205,6 +208,11 @@ if (formResponse.data?.results) {
     });
   }, [form]);
   const handleChange = (section, field, column, value) => {
+    // Prevent negative numbers for expenditure and allowed fields
+    if ((column === 'expenditure' || column === 'allowed') && value < 0) {
+      value = 0;
+    }
+  
     setForm(prev => ({
       ...prev,
       [section]: {
@@ -216,7 +224,6 @@ if (formResponse.data?.results) {
       }
     }));
   };
-
   const handleNext = async () => {
     try {
       setSubmitting(true);
@@ -369,7 +376,7 @@ if (formResponse.data?.results) {
                   <thead>
                     <tr className="bg-gray-50">
                       <th className="border border-gray-300 px-4 py-2 text-left">HEAD OF EXPENDITURE</th>
-                      <th className="border border-gray-300 px-4 py-2">Expenditure of the previous Academic Year</th>
+                      <th className="border border-gray-300 px-4 py-2">Expenditure of the previous  Year</th>
                       <th className="border border-gray-300 px-4 py-2">Allowed</th>
                       <th className="border border-gray-300 px-4 py-2">If not allowed/reduced-Reason</th>
                     </tr>
@@ -378,7 +385,9 @@ if (formResponse.data?.results) {
                     {Object.entries(form.sectionA).map(([field, values]) => (
                       <tr key={field}>
                         <td className="border border-gray-300 px-4 py-2 capitalize">
-                          {field.replace(/([A-Z])/g, ' $1').toLowerCase()}
+                        {field === 'epfContribution' ? 'EPF Contribution' : 
+ field === 'esi' ? 'ESI' :
+ field.replace(/([A-Z])/g, ' $1').toLowerCase()}
                         </td>
                         <td className="border border-gray-300 px-4 py-2">
                           <input
@@ -428,7 +437,7 @@ if (formResponse.data?.results) {
                   <thead>
                     <tr className="bg-gray-50">
                       <th className="border border-gray-300 px-4 py-2 text-left">HEAD OF EXPENDITURE</th>
-                      <th className="border border-gray-300 px-4 py-2">Expenditure of the previous Academic Year</th>
+                      <th className="border border-gray-300 px-4 py-2">Expenditure of the previous Year</th>
                       <th className="border border-gray-300 px-4 py-2">Allowed</th>
                       <th className="border border-gray-300 px-4 py-2">If not allowed/reduced-Reason</th>
                     </tr>
@@ -487,7 +496,7 @@ if (formResponse.data?.results) {
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                 disabled={submitting}
               >
-                Cancel
+                Back
               </button>
               <button
   onClick={handleNext}

@@ -92,37 +92,45 @@ const Account5Form = () => {
 
   useEffect(() => {
     const calculateTotals = () => {
-      const expenditureTotal = Object.values(form.items).reduce(
-        (sum, item) => sum + (parseFloat(item.expenditure) || 0),
-        0
+      const expenditureTotal = Math.round(
+        Object.values(form.items).reduce(
+          (sum, item) => sum + (parseFloat(item.expenditure) || 0),
+          0
+        )
       );
-      const allowedTotal = Object.values(form.items).reduce(
-        (sum, item) => sum + (parseFloat(item.allowed) || 0),
-        0
+      const allowedTotal = Math.round(
+        Object.values(form.items).reduce(
+          (sum, item) => sum + (parseFloat(item.allowed) || 0),
+          0
+        )
       );
-  
+    
       // Store Account 5 totals
       localStorage.setItem('account5TotalExpenditure', expenditureTotal.toString());
       localStorage.setItem('account5TotalAllowed', allowedTotal.toString());
-  
+    
       // Calculate grand total (I-V) using values from localStorage
-      const account1Expenditure = parseFloat(localStorage.getItem('totalExpenditure')) || 0; // Using direct key
-      const account1Allowed = parseFloat(localStorage.getItem('totalAllowed')) || 0; // Using direct key
-      const account2Expenditure = parseFloat(localStorage.getItem('account2TotalExpenditure')) || 0;
-      const account3Expenditure = parseFloat(localStorage.getItem('account3TotalExpenditure')) || 0;
-      const account4Expenditure = parseFloat(localStorage.getItem('maintenanceGrandTotalExpenditure')) || 0;
-  
-      const account2Allowed = parseFloat(localStorage.getItem('account2TotalAllowed')) || 0;
-      const account3Allowed = parseFloat(localStorage.getItem('account3TotalAllowed')) || 0;
-      const account4Allowed = parseFloat(localStorage.getItem('maintenanceGrandTotalAllowed')) || 0;
-  
-      const grandTotalExpenditure = account1Expenditure + account2Expenditure + account3Expenditure + account4Expenditure + expenditureTotal;
-      const grandTotalAllowed = account1Allowed + account2Allowed + account3Allowed + account4Allowed + allowedTotal;
-  
+      const account1Expenditure = Math.round(parseFloat(localStorage.getItem('totalExpenditure')) || 0);
+      const account1Allowed = Math.round(parseFloat(localStorage.getItem('totalAllowed')) || 0);
+      const account2Expenditure = Math.round(parseFloat(localStorage.getItem('account2TotalExpenditure')) || 0);
+      const account3Expenditure = Math.round(parseFloat(localStorage.getItem('account3TotalExpenditure')) || 0);
+      const account4Expenditure = Math.round(parseFloat(localStorage.getItem('maintenanceGrandTotalExpenditure')) || 0);
+    
+      const account2Allowed = Math.round(parseFloat(localStorage.getItem('account2TotalAllowed')) || 0);
+      const account3Allowed = Math.round(parseFloat(localStorage.getItem('account3TotalAllowed')) || 0);
+      const account4Allowed = Math.round(parseFloat(localStorage.getItem('maintenanceGrandTotalAllowed')) || 0);
+    
+      const grandTotalExpenditure = Math.round(
+        account1Expenditure + account2Expenditure + account3Expenditure + account4Expenditure + expenditureTotal
+      );
+      const grandTotalAllowed = Math.round(
+        account1Allowed + account2Allowed + account3Allowed + account4Allowed + allowedTotal
+      );
+    
       // Store grand totals (I-V)
       localStorage.setItem('accountsItoVTotalExpenditure', grandTotalExpenditure.toString());
       localStorage.setItem('accountsItoVTotalAllowed', grandTotalAllowed.toString());
-  
+    
       return { 
         expenditure: expenditureTotal, 
         allowed: allowedTotal,
@@ -136,6 +144,11 @@ const Account5Form = () => {
   }, [form]);
 
   const handleChange = (field, column, value) => {
+    // Prevent negative numbers for expenditure and allowed fields
+    if ((column === 'expenditure' || column === 'allowed') && value < 0) {
+      value = 0;
+    }
+    
     setForm(prev => ({
       ...prev,
       items: {
@@ -232,7 +245,7 @@ const Account5Form = () => {
                 <thead>
                   <tr className="bg-gray-50">
                     <th className="border border-gray-300 px-4 py-2 text-left">HEAD OF EXPENDITURE</th>
-                    <th className="border border-gray-300 px-4 py-2">Expenditure of the previous academic year</th>
+                    <th className="border border-gray-300 px-4 py-2">Expenditure of the previous  year</th>
                     <th className="border border-gray-300 px-4 py-2">Allowed</th>
                     <th className="border border-gray-300 px-4 py-2">If not allowed/reduced-Reason</th>
                   </tr>
@@ -418,7 +431,7 @@ const Account5Form = () => {
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                 disabled={loading}
               >
-                Cancel
+                Back
               </button>
               <button
                 onClick={handleNext}

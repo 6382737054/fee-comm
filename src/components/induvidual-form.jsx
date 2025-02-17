@@ -10,6 +10,7 @@ const IndividualFeeCommitteeForm = () => {
   const [error, setError] = useState(null);
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
+    strengthAsOnDate: '',
     date: '',
     udiseCode: '',
     schoolName: '',
@@ -155,6 +156,9 @@ const IndividualFeeCommitteeForm = () => {
   };
 
   const handleChange = (section, field, value) => {
+    // Prevent negative numbers for all number inputs
+    if (value < 0) value = 0;
+    
     setFormData(prev => ({
       ...prev,
       [section]: {
@@ -268,6 +272,7 @@ const IndividualFeeCommitteeForm = () => {
       }
   
       const formattedData = {
+        studentStrengthAsOnDate: formatDate(formData.strengthAsOnDate), // Add this new field
         formDate: formatDate(formData.date),
         udiseCode: parseInt(formData.udiseCode),
         schoolName: formData.schoolName,
@@ -305,34 +310,10 @@ const IndividualFeeCommitteeForm = () => {
           eleven: parseInt(formData.studentStrength.class11) || 0,
           twelve: parseInt(formData.studentStrength.class12) || 0
         },
-        totalNumberOfRteStudentsIndividual: {
-          total: parseInt(formData.rteStudents.total) || 0,
-          lkg: parseInt(formData.rteStudents.lkg) || 0,
-          ukg: parseInt(formData.rteStudents.ukg) || 0,
-          one: parseInt(formData.rteStudents.class1) || 0,
-          two: parseInt(formData.rteStudents.class2) || 0,
-          three: parseInt(formData.rteStudents.class3) || 0,
-          four: parseInt(formData.rteStudents.class4) || 0,
-          five: parseInt(formData.rteStudents.class5) || 0,
-          six: parseInt(formData.rteStudents.class6) || 0,
-          seven: parseInt(formData.rteStudents.class7) || 0,
-          eight: parseInt(formData.rteStudents.class8) || 0
-        },
-        rteAmountSanctionedIndividual: {
-          total: parseInt(formData.rteAmount.total) || 0,
-          lkg: parseInt(formData.rteAmount.lkg) || 0,
-          ukg: parseInt(formData.rteAmount.ukg) || 0,
-          one: parseInt(formData.rteAmount.class1) || 0,
-          two: parseInt(formData.rteAmount.class2) || 0,
-          three: parseInt(formData.rteAmount.class3) || 0,
-          four: parseInt(formData.rteAmount.class4) || 0,
-          five: parseInt(formData.rteAmount.class5) || 0,
-          six: parseInt(formData.rteAmount.class6) || 0,
-          seven: parseInt(formData.rteAmount.class7) || 0,
-          eight: parseInt(formData.rteAmount.class8) || 0
-        },
+        totalNumberOfRteStudentsIndividual: null,
+        rteAmountSanctionedIndividual: null,
         previousFeeCommitteeOrderFeeIndividual: {
-          total: parseInt(formData.previousFee.total) || 0,
+          total: null, 
           lkg: parseInt(formData.previousFee.lkg) || 0,
           ukg: parseInt(formData.previousFee.ukg) || 0,
           one: parseInt(formData.previousFee.class1) || 0,
@@ -349,7 +330,7 @@ const IndividualFeeCommitteeForm = () => {
           twelve: parseInt(formData.previousFee.class12) || 0
         },
         proposedFeeIndividual: {
-          total: parseInt(formData.proposedFee.total) || 0,
+          total: null, // Changed from parseInt(formData.pro
           lkg: parseInt(formData.proposedFee.lkg) || 0,
           ukg: parseInt(formData.proposedFee.ukg) || 0,
           one: parseInt(formData.proposedFee.class1) || 0,
@@ -376,7 +357,7 @@ const IndividualFeeCommitteeForm = () => {
       
       if (response.status === 200) {
         alert('Form submitted successfully!');
-        navigate('/allocate'); // Assuming '/allocate' is the route where AllocationForm is rendered
+        navigate('/home'); // Corrected navigation to home
       }
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -497,81 +478,57 @@ const IndividualFeeCommitteeForm = () => {
         </div>
       </div>
 
-      {/* Student Strength Section */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">STUDENT STRENGTH</h3>
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">LKG</label>
-              <input type="number" value={formData.studentStrength.lkg} onChange={(e) => handleChange('studentStrength', 'lkg', e.target.value)} className="w-full px-3 py-2 rounded border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"/>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">UKG</label>
-              <input type="number" value={formData.studentStrength.ukg} onChange={(e) => handleChange('studentStrength', 'ukg', e.target.value)} className="w-full px-3 py-2 rounded border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"/>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {renderClassInputs('studentStrength', 1, 12)}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">TOTAL</label>
-            <input type="number" value={formData.studentStrength.total} readOnly className="w-full px-3 py-2 rounded border border-gray-200 bg-gray-50"/>
-          </div>
-        </div>
+ {/* Student Strength Section */}
+<div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+  <div className="flex items-center gap-4 mb-4">
+    <h3 className="text-lg font-medium text-gray-900">STUDENT STRENGTH AS ON</h3>
+    <input
+      type="date"
+      value={formData.strengthAsOnDate}
+      onChange={(e) => setFormData({...formData, strengthAsOnDate: e.target.value})}
+      className="px-3 py-2 rounded border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+    />
+  </div>
+  <div className="space-y-6">
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">LKG</label>
+        <input
+          type="number"
+          value={formData.studentStrength.lkg}
+          onChange={(e) => handleChange('studentStrength', 'lkg', e.target.value)}
+          className="w-full px-3 py-2 rounded border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+        />
       </div>
-
-      {/* RTE Students Section */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">TOTAL NO. OF RTE STUDENTS</h3>
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">LKG</label>
-              <input type="number" value={formData.rteStudents.lkg} onChange={(e) => handleChange('rteStudents', 'lkg', e.target.value)} className="w-full px-3 py-2 rounded border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"/>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">UKG</label>
-              <input type="number" value={formData.rteStudents.ukg} onChange={(e) => handleChange('rteStudents', 'ukg', e.target.value)} className="w-full px-3 py-2 rounded border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"/>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {renderClassInputs('rteStudents', 1, 8)}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">TOTAL</label>
-            <input type="number" value={formData.rteStudents.total} readOnly className="w-full px-3 py-2 rounded border border-gray-200 bg-gray-50"/>
-          </div>
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">UKG</label>
+        <input
+          type="number"
+          value={formData.studentStrength.ukg}
+          onChange={(e) => handleChange('studentStrength', 'ukg', e.target.value)}
+          className="w-full px-3 py-2 rounded border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+        />
       </div>
-
-      {/* RTE Amount Section */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">RTE AMOUNT SANCTIONED CLASSWISE</h3>
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">LKG</label>
-              <input type="number" value={formData.rteAmount.lkg} onChange={(e) => handleChange('rteAmount', 'lkg', e.target.value)} className="w-full px-3 py-2 rounded border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"/>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">UKG</label>
-              <input type="number" value={formData.rteAmount.ukg} onChange={(e) => handleChange('rteAmount', 'ukg', e.target.value)} className="w-full px-3 py-2 rounded border border-gray-200 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"/>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {renderClassInputs('rteAmount', 1, 8)}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">TOTAL</label>
-            <input type="number" value={formData.rteAmount.total} readOnly className="w-full px-3 py-2 rounded border border-gray-200 bg-gray-50"/>
-          </div>
-        </div>
-      </div>
+    </div>
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {renderClassInputs('studentStrength', 1, 12)}
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">TOTAL</label>
+      <input
+        type="number"
+        value={formData.studentStrength.total}
+        readOnly
+        className="w-full px-3 py-2 rounded border border-gray-200 bg-gray-50"
+      />
+    </div>
+  </div>
+</div>
+ 
 
       {/* Previous Fee Section */}
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">PREVIOUS FEE COMMITTEE ORDER FEE</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">FEE DETERMINED IN THE PREVIOUS ORDER</h3>
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -586,10 +543,7 @@ const IndividualFeeCommitteeForm = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {renderClassInputs('previousFee', 1, 12)}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">TOTAL</label>
-            <input type="number" value={formData.previousFee.total} readOnly className="w-full px-3 py-2 rounded border border-gray-200 bg-gray-50"/>
-          </div>
+        
         </div>
       </div>
 
@@ -610,10 +564,7 @@ const IndividualFeeCommitteeForm = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {renderClassInputs('proposedFee', 1, 12)}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">TOTAL</label>
-            <input type="number" value={formData.proposedFee.total} readOnly className="w-full px-3 py-2 rounded border border-gray-200 bg-gray-50"/>
-          </div>
+         
         </div>
       </div>
 

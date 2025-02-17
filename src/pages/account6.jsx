@@ -75,10 +75,10 @@ const Account6Form = () => {
         if (response.data?.results) {
           const data = response.data.results;
           const devFundPercentage = getDevelopmentFundPercentage(localityType);
-          const devFundAllowed = (accountsItoVTotal * (devFundPercentage/100));
-          const infraAllowed = (accountsItoVTotal * (9/100));
+          const devFundAllowed = Math.round(accountsItoVTotal * (devFundPercentage/100));
+          const infraAllowed = Math.round(accountsItoVTotal * (9/100));
           const unexpectedAmount = data.account6UnexpectedExpendituresPercentage || 750;
-          const unexpectedAllowed = unexpectedAmount * childrenCount;
+          const unexpectedAllowed = Math.round(unexpectedAmount * childrenCount);
 
           setForm({
             developmentFund: {
@@ -125,16 +125,25 @@ const Account6Form = () => {
   }, [form.minority.enabled, accountsItoVTotal]);
 
   useEffect(() => {
-    const totalAllowed = Object.values(form).reduce((sum, item) => sum + (parseFloat(item.allowed) || 0), 0);
-    const grandTotal = accountsItoVTotal + totalAllowed;
-    const mean = grandTotal / (childrenCount || 1);
-
+    const totalAllowed = Object.values(form).reduce((sum, item) => {
+      // Round the allowed value to the nearest whole number
+      return sum + Math.round(parseFloat(item.allowed) || 0);
+    }, 0);
+  
+    const grandTotal = Math.round(accountsItoVTotal + totalAllowed);
+    const mean = Math.round(grandTotal / (childrenCount || 1));
+  
     setTotals({
-      account6TotalAllowed: totalAllowed,
+      account6TotalAllowed: Math.round(totalAllowed),
       grandTotalAllowed: grandTotal,
       meanValue: mean
     });
-    localStorage.setItem('grandTotalAllowed(I-VI)', grandTotal.toFixed(2));
+  
+    // Store as rounded whole numbers
+    localStorage.setItem('grandTotalAllowed(I-VI)', grandTotal.toString());
+    
+    // Insert the line to store mean value here
+    localStorage.setItem('meanValue', mean.toString());
   }, [form, accountsItoVTotal, childrenCount]);
 
   const handleMinorityToggle = (enabled) => {
@@ -244,6 +253,16 @@ const Account6Form = () => {
                 </tr>
               </thead>
               <tbody>
+              <tr>
+  <td className="border border-gray-300 px-4 py-2 font-bold">Total Account I - V</td>
+  <td className="border border-gray-300 px-4 py-2 text-center">
+    {parseFloat(localStorage.getItem('accountsItoVTotalExpenditure') || 0).toFixed(0)}
+  </td>
+  <td className="border border-gray-300 px-4 py-2 text-center">
+    {parseFloat(localStorage.getItem('accountsItoVTotalAllowed') || 0).toFixed(0)}
+  </td>
+  <td className="border border-gray-300 px-4 py-2"></td>
+</tr>
                 <tr>
                   <td className="border border-gray-300 px-4 py-2">
                     Development fund
@@ -258,7 +277,7 @@ const Account6Form = () => {
                     {form.developmentFund.percentage}%
                   </td>
                   <td className="border border-gray-300 px-4 py-2 text-center">
-                    {form.developmentFund.allowed.toFixed(2)}
+                    {form.developmentFund.allowed.toFixed(0)}
                   </td>
                   <td className="border border-gray-300 px-4 py-2" contentEditable
                     onBlur={(e) => handleReasonChange('developmentFund', e.target.textContent)}>
@@ -279,7 +298,7 @@ const Account6Form = () => {
                     />
                   </td>
                   <td className="border border-gray-300 px-4 py-2 text-center">
-                    {form.minority.enabled ? form.minority.allowed.toFixed(2) : '-'}
+                    {form.minority.enabled ? form.minority.allowed.toFixed(0) : '-'}
                   </td>
                   <td className="border border-gray-300 px-4 py-2" contentEditable
                     onBlur={(e) => handleReasonChange('minority', e.target.textContent)}>
@@ -294,7 +313,7 @@ const Account6Form = () => {
                   </td>
                   <td className="border border-gray-300 px-4 py-2 text-center">9%</td>
                   <td className="border border-gray-300 px-4 py-2 text-center">
-                    {form.infrastructure.allowed.toFixed(2)}
+                    {form.infrastructure.allowed.toFixed(0)}
                   </td>
                   <td className="border border-gray-300 px-4 py-2" contentEditable
                     onBlur={(e) => handleReasonChange('infrastructure', e.target.textContent)}>
@@ -319,7 +338,7 @@ const Account6Form = () => {
                     </select>
                   </td>
                   <td className="border border-gray-300 px-4 py-2 text-center">
-                    {form.unexpected.allowed.toFixed(2)}
+                    {form.unexpected.allowed.toFixed(0)}
                   </td>
                   <td className="border border-gray-300 px-4 py-2" contentEditable
                     onBlur={(e) => handleReasonChange('unexpected', e.target.textContent)}>
@@ -331,7 +350,7 @@ const Account6Form = () => {
                   <td className="border border-gray-300 px-4 py-2 font-bold">Total</td>
                   <td className="border border-gray-300 px-4 py-2"></td>
                   <td className="border border-gray-300 px-4 py-2 text-center font-bold">
-                    {totals.account6TotalAllowed.toFixed(2)}
+                    {totals.account6TotalAllowed.toFixed(0)}
                   </td>
                   <td className="border border-gray-300 px-4 py-2"></td>
                 </tr>
@@ -340,7 +359,7 @@ const Account6Form = () => {
                   <td className="border border-gray-300 px-4 py-2 font-bold">Grand Total Account I - VI</td>
                   <td className="border border-gray-300 px-4 py-2"></td>
                   <td className="border border-gray-300 px-4 py-2 text-center font-bold">
-                    {totals.grandTotalAllowed.toFixed(2)}
+                    {totals.grandTotalAllowed.toFixed(0)}
                   </td>
                   <td className="border border-gray-300 px-4 py-2"></td>
                 </tr>
@@ -355,7 +374,7 @@ const Account6Form = () => {
                 <tr>
                 <td className="border border-gray-300 px-4 py-2">Mean value</td>
 <td className="border border-gray-300 px-4 py-2 text-center" colSpan="3">
-  {totals.meanValue.toFixed(2)}
+  {totals.meanValue.toFixed(0)}
 </td>
 </tr>
               </tbody>
@@ -366,7 +385,7 @@ const Account6Form = () => {
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
                 disabled={loading}
               >
-                Cancel
+                Back
               </button>
               <button
                 onClick={handleNext}

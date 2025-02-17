@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/login';
 import HomePage from './pages/homepage';
 import Navbar from './components/navbar';
@@ -13,6 +13,23 @@ import Account4Form from './pages/account4';
 import Account56Form from './pages/account56';
 import Account6Form from './pages/account6';
 import Account7Form from './pages/account7';
+import ApprovalForm from './pages/approvalformat';
+import ObjectionFormPage from './pages/objectionformat';
+
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  // Check for authentication using the same localStorage key as your login page
+  const loginResponse = localStorage.getItem('loginResponse');
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+
+  if (!isAuthenticated || !loginResponse) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
+// Layout Component
 const Layout = ({ children }) => {
   return (
     <div>
@@ -26,102 +43,163 @@ const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Login page without navbar */}
-        <Route path="/" element={<LoginPage />} />
-        
-        {/* Pages with navbar */}
+        {/* Public Route - Login Page */}
+        <Route 
+          path="/" 
+          element={
+            // Redirect to home if already logged in
+            localStorage.getItem('isAuthenticated') === 'true' ? 
+            <Navigate to="/home" replace /> : 
+            <LoginPage />
+          } 
+        />
+
+        {/* Protected Routes */}
         <Route
           path="/home"
           element={
-            <Layout>
-              <HomePage />
-            </Layout>
+            <ProtectedRoute>
+              <Layout>
+                <HomePage />
+              </Layout>
+            </ProtectedRoute>
           }
         />
-        <Route 
+
+        <Route
           path="/forms"
           element={
-            <Layout>
-              <FormsPage/>
-            </Layout>
+            <ProtectedRoute>
+              <Layout>
+                <FormsPage />
+              </Layout>
+            </ProtectedRoute>
           }
         />
-         <Route 
+
+        <Route
           path="/account7"
           element={
-            <Layout>
-              <Account7Form/>
-            </Layout>
+            <ProtectedRoute>
+              <Layout>
+                <Account7Form />
+              </Layout>
+            </ProtectedRoute>
           }
         />
-          <Route 
+
+        <Route
           path="/account56"
           element={
-            <Layout>
-              <Account56Form/>
-            </Layout>
+            <ProtectedRoute>
+              <Layout>
+                <Account56Form />
+              </Layout>
+            </ProtectedRoute>
           }
         />
-               <Route 
+
+        <Route
           path="/account6"
           element={
-            <Layout>
-              <Account6Form/>
-            </Layout>
+            <ProtectedRoute>
+              <Layout>
+                <Account6Form />
+              </Layout>
+            </ProtectedRoute>
           }
         />
 
-
-<Route 
+        <Route
           path="/form2"
           element={
-            <Layout>
-              <Account2Form/>
-            </Layout>
+            <ProtectedRoute>
+              <Layout>
+                <Account2Form />
+              </Layout>
+            </ProtectedRoute>
           }
         />
-        <Route 
+
+        <Route
           path="/account3"
           element={
-            <Layout>
-              <Account3Form/>
-            </Layout>
+            <ProtectedRoute>
+              <Layout>
+                <Account3Form />
+              </Layout>
+            </ProtectedRoute>
           }
         />
-            <Route 
+
+        <Route
+          path="/approve"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <ApprovalForm />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/objection"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <ObjectionFormPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/account4"
           element={
-            <Layout>
-              <Account4Form/>
-            </Layout>
+            <ProtectedRoute>
+              <Layout>
+                <Account4Form />
+              </Layout>
+            </ProtectedRoute>
           }
         />
-        {/* Updated route with ID parameter */}
-        <Route 
+
+        <Route
           path="/individual-section-form/:id"
           element={
-            <Layout>
-              <IndividualSectionForm/>
-            </Layout>
+            <ProtectedRoute>
+              <Layout>
+                <IndividualSectionForm />
+              </Layout>
+            </ProtectedRoute>
           }
         />
-        {/* Updated route with ID parameter */}
-        <Route 
+
+        <Route
           path="/multiple-section-form/:id"
           element={
-            <Layout>
-              <MultipleSectionForm/>
-            </Layout>
+            <ProtectedRoute>
+              <Layout>
+                <MultipleSectionForm />
+              </Layout>
+            </ProtectedRoute>
           }
         />
-        <Route 
+
+        <Route
           path="/allocate"
           element={
-            <Layout>
-              <AllocationForm/>
-            </Layout>
+            <ProtectedRoute>
+              <Layout>
+                <AllocationForm />
+              </Layout>
+            </ProtectedRoute>
           }
         />
+
+        {/* Catch all unmatched routes */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

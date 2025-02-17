@@ -100,13 +100,17 @@ const Account3Form = () => {
 
   useEffect(() => {
     const calculateTotals = () => {
-      const expenditureTotal = Object.values(form.items).reduce(
-        (sum, item) => sum + (parseFloat(item.expenditure) || 0),
-        0
+      const expenditureTotal = Math.round(
+        Object.values(form.items).reduce(
+          (sum, item) => sum + (parseFloat(item.expenditure) || 0),
+          0
+        )
       );
-      const allowedTotal = Object.values(form.items).reduce(
-        (sum, item) => sum + (parseFloat(item.allowed) || 0),
-        0
+      const allowedTotal = Math.round(
+        Object.values(form.items).reduce(
+          (sum, item) => sum + (parseFloat(item.allowed) || 0),
+          0
+        )
       );
       return { expenditure: expenditureTotal, allowed: allowedTotal };
     };
@@ -123,6 +127,11 @@ const Account3Form = () => {
   }, [form]);
 
   const handleChange = (field, column, value) => {
+    // For number inputs (expenditure and allowed), prevent negative values
+    if ((column === 'expenditure' || column === 'allowed') && value < 0) {
+      value = 0;
+    }
+    
     setForm(prev => ({
       ...prev,
       items: {
@@ -134,7 +143,6 @@ const Account3Form = () => {
       }
     }));
   };
-
   const transformFormData = () => ({
     account3EducationTourExpenditure: parseFloat(form.items.educationalTour.expenditure) || 0,
     account3EducationTourAllowed: parseFloat(form.items.educationalTour.allowed) || 0,
@@ -212,6 +220,7 @@ const Account3Form = () => {
     );
   }
 
+
   return (
     <div className="min-h-screen bg-gray-50 py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -235,7 +244,7 @@ const Account3Form = () => {
                 <thead>
                   <tr className="bg-gray-50">
                     <th className="border border-gray-300 px-4 py-2 text-left">HEAD OF EXPENDITURE</th>
-                    <th className="border border-gray-300 px-4 py-2">Expenditure of the previous Academic Year</th>
+                    <th className="border border-gray-300 px-4 py-2">Expenditure of the previous Year</th>
                     <th className="border border-gray-300 px-4 py-2">Allowed</th>
                     <th className="border border-gray-300 px-4 py-2">If not allowed/reduced-Reason</th>
                   </tr>
@@ -263,11 +272,11 @@ const Account3Form = () => {
                         />
                       </td>
                       <td className="border border-gray-300 px-4 py-2">
-                        <input
-                          type="text"
+                        <textarea
                           value={values.reason}
                           onChange={(e) => handleChange(field, 'reason', e.target.value)}
-                          className="w-full px-3 py-2 border rounded-md border-gray-300"
+                          className="w-full px-3 py-2 border rounded-md border-gray-300 min-h-[60px] resize-y"
+                          rows={2}
                         />
                       </td>
                     </tr>
@@ -293,7 +302,7 @@ const Account3Form = () => {
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                 disabled={loading}
               >
-                Cancel
+                Back
               </button>
               <button
                 onClick={handleNext}

@@ -184,13 +184,17 @@ const Account2Form = () => {
 
   useEffect(() => {
     const calculateTotals = () => {
-      const expenditureTotal = Object.values(form.items).reduce(
-        (sum, item) => sum + (parseFloat(item.expenditure) || 0),
-        0
+      const expenditureTotal = Math.round(
+        Object.values(form.items).reduce(
+          (sum, item) => sum + (parseFloat(item.expenditure) || 0),
+          0
+        )
       );
-      const allowedTotal = Object.values(form.items).reduce(
-        (sum, item) => sum + (parseFloat(item.allowed) || 0),
-        0
+      const allowedTotal = Math.round(
+        Object.values(form.items).reduce(
+          (sum, item) => sum + (parseFloat(item.allowed) || 0),
+          0
+        )
       );
       return { expenditure: expenditureTotal, allowed: allowedTotal };
     };
@@ -206,6 +210,11 @@ const Account2Form = () => {
     setTotals(calculatedTotals);
   }, [form]);
   const handleChange = (field, column, value) => {
+    // For number inputs (expenditure and allowed), prevent negative values
+    if ((column === 'expenditure' || column === 'allowed') && value < 0) {
+      value = 0;
+    }
+    
     setForm(prev => ({
       ...prev,
       items: {
@@ -348,7 +357,7 @@ const Account2Form = () => {
                 <thead>
                   <tr className="bg-gray-50">
                     <th className="border border-gray-300 px-4 py-2 text-left">HEAD OF EXPENDITURE</th>
-                    <th className="border border-gray-300 px-4 py-2">Expenditure of the previous Academic Year</th>
+                    <th className="border border-gray-300 px-4 py-2">Expenditure of the previous Year</th>
                     <th className="border border-gray-300 px-4 py-2">Allowed</th>
                     <th className="border border-gray-300 px-4 py-2">If not allowed/reduced-Reason</th>
                   </tr>
@@ -357,7 +366,17 @@ const Account2Form = () => {
                   {Object.entries(form.items).map(([field, values]) => (
                     <tr key={field}>
                       <td className="border border-gray-300 px-4 py-2 capitalize">
-                        {field.replace(/([A-Z])/g, ' $1').toLowerCase()}
+                      {field === 'printingPrintingOfBookLedgersFeeReceiptsSchoolMagazinesAndCirculars'
+  ? 'Printing of book ledgers fee receipts school magazines and circulars'
+  : field === 'internetAndSMSServicesAdministrativePurposes'
+  ? 'Internet and SMS services (administrative purposes)'
+  : field === 'telephoneAndMobilePhoneAdministrativePurposes'
+  ? 'Telephone and mobile phone (administrative purposes)'
+  : field === 'stationeryItemsAdministrativePurposes'
+  ? 'Stationery items (administrative purposes)'
+  : field === 'booksAndPeriodicalsAdministrativePurposes'
+  ? 'Books and periodicals (administrative purposes)'
+  : field.replace(/([A-Z])/g, ' $1').toLowerCase()}
                       </td>
                       <td className="border border-gray-300 px-4 py-2">
                         <input
@@ -405,7 +424,7 @@ const Account2Form = () => {
                 onClick={() => navigate(-1)}
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
               >
-                Cancel
+                Back
               </button>
               <button
                 onClick={handleNext}

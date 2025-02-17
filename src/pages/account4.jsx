@@ -206,13 +206,17 @@ const Account4Form = () => {
   }, [loginResponse?.output?.token, loginResponse?.output?.data?.id]);
   useEffect(() => {
     const calculateSectionTotals = (section) => {
-      const expenditureTotal = Object.values(section).reduce(
-        (sum, item) => sum + (parseFloat(item.expenditure) || 0),
-        0
+      const expenditureTotal = Math.round(
+        Object.values(section).reduce(
+          (sum, item) => sum + (parseFloat(item.expenditure) || 0),
+          0
+        )
       );
-      const allowedTotal = Object.values(section).reduce(
-        (sum, item) => sum + (parseFloat(item.allowed) || 0),
-        0
+      const allowedTotal = Math.round(
+        Object.values(section).reduce(
+          (sum, item) => sum + (parseFloat(item.allowed) || 0),
+          0
+        )
       );
       return { expenditure: expenditureTotal, allowed: allowedTotal };
     };
@@ -226,8 +230,12 @@ const Account4Form = () => {
     };
   
     const grandTotal = {
-      expenditure: Object.values(sectionTotals).reduce((sum, section) => sum + section.expenditure, 0),
-      allowed: Object.values(sectionTotals).reduce((sum, section) => sum + section.allowed, 0)
+      expenditure: Math.round(
+        Object.values(sectionTotals).reduce((sum, section) => sum + section.expenditure, 0)
+      ),
+      allowed: Math.round(
+        Object.values(sectionTotals).reduce((sum, section) => sum + section.allowed, 0)
+      )
     };
   
     // Store grand totals in localStorage
@@ -240,6 +248,11 @@ const Account4Form = () => {
     });
   }, [form]);
   const handleChange = (section, field, column, value) => {
+    // Prevent negative numbers for expenditure and allowed fields
+    if ((column === 'expenditure' || column === 'allowed') && value < 0) {
+      value = 0;
+    }
+  
     setForm(prev => ({
       ...prev,
       [section]: {
@@ -443,7 +456,7 @@ const Account4Form = () => {
                 <thead>
                   <tr className="bg-gray-50">
                     <th className="border border-gray-300 px-4 py-2 text-left">HEAD OF EXPENDITURE</th>
-                    <th className="border border-gray-300 px-4 py-2">Expenditure of the previous Academic Year</th>
+                    <th className="border border-gray-300 px-4 py-2">Expenditure of the previous Year</th>
                     <th className="border border-gray-300 px-4 py-2">Allowed</th>
                     <th className="border border-gray-300 px-4 py-2">If not allowed/reduced-Reason</th>
                   </tr>
@@ -481,7 +494,7 @@ const Account4Form = () => {
                 className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                 disabled={loading}
               >
-                Cancel
+                Back
               </button>
               <button
                 onClick={handleNext}
